@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from models.LSTM_with_attention import AttnLSTM
 from pytorch_tabnet.tab_network import TabNet
+import numpy as np
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -59,11 +60,6 @@ if __name__ == '__main__':
                      h_merge='mean',
                      num_class=9)
 
-    import numpy as np
     seq_samples = torch.randn(12,10,1)
     tab_samples = torch.randint(22,(12,10))
     outputs, weights = model(seq_inputs = seq_samples, tab_inputs = tab_samples)
-
-
-
-outputs.shape
