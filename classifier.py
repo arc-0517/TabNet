@@ -81,7 +81,7 @@ clf = TabNetClassifier(n_steps=5,
                        mask_type='sparsemax' # "sparsemax", entmax
                       )
 
-max_epochs = 5
+max_epochs = 100
 
 clf.fit(
     X_train=X_train, y_train=y_train,

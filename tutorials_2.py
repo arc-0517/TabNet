@@ -1,4 +1,5 @@
 from pytorch_tabnet_custom.tab_model import TabNetClassifier
+from pytorch_tabnet.augmentations import ClassificationSMOTE
 
 import torch
 from sklearn.preprocessing import LabelEncoder
@@ -80,7 +81,6 @@ y_valid = train[target].values[valid_indices]
 
 X_test = train[features].values[test_indices]
 y_test = train[target].values[test_indices]
-
 
 '''
 Network parameters

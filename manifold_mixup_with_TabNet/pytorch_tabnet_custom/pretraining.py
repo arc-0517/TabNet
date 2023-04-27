@@ -359,7 +359,7 @@ class TabNetPretrainer(TabModel):
         X = X.to(self.device).float()
         return self.network(X)
 
-    def extract_features(self, X):
+    def _extract_features(self, X):
         X = X.to(self.device).float()
         return self.network(X, feat_extract=True)
 

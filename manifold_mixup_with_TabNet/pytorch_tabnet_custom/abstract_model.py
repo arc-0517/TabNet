@@ -480,9 +480,27 @@ class TabModel(BaseEstimator):
         for param in self.network.parameters():
             param.grad = None
 
-        output, M_loss = self.network(X)
+        def mixup_data(alpha=1.0):
+            if alpha > 0:
+                lam = np.random.beta(alpha, alpha)
+            else:
+                lam = 1.
+            return lam
 
-        loss = self.compute_loss(output, y)
+        lam = mixup_data(alpha=1.0)
+        lam = torch.from_numpy(np.array([lam]).astype('float32')).to(self.device)
+
+        output, M_loss, y_a, y_b = self.network(X, mixup=True, lam=lam, target=y)
+
+        """
+        manifold mixup loss function insert
+        """
+
+
+        # loss = self.compute_loss(output, y)
+        loss = lam*self.compute_loss(output, y_a) + (1-lam)*self.compute_loss(output, y_b)
+
+
         # Add the overall sparsity loss
         loss = loss - self.lambda_sparse * M_loss
 

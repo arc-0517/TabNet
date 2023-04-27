@@ -359,11 +359,11 @@ class TabNetPretraining(torch.nn.Module):
             embedded_x : embedded input
             obf_vars : which variable where obfuscated
         """
-        # with torch.no_grad():
-        #     if feat_extract:
-        #         embedded_x = self.embedder(x)
-        #         steps_out, _ = self.encoder(embedded_x)
-        #         return steps_out
+        with torch.no_grad():
+            if feat_extract:
+                embedded_x = self.embedder(x)
+                steps_out, _ = self.encoder(embedded_x)
+                return steps_out
 
         embedded_x = self.embedder(x)
         if self.training:
@@ -470,7 +470,8 @@ class TabNetNoEmbeddings(torch.nn.Module):
             self.final_mapping = Linear(n_d, output_dim, bias=False)
             initialize_non_glu(self.final_mapping, n_d, output_dim)
 
-    def forward(self, x):
+    def forward(self, x, mixup, lam, target):
+
         res = 0
         steps_output, M_loss = self.encoder(x)
         res = torch.sum(torch.stack(steps_output, dim=0), dim=0)
@@ -481,8 +482,25 @@ class TabNetNoEmbeddings(torch.nn.Module):
             for task_mapping in self.multi_task_mappings:
                 out.append(task_mapping(res))
         else:
-            out = self.final_mapping(res)
-        return out, M_loss
+            """
+            manifold mix-up insert
+            """
+            if mixup: # train 할 때만, mixup=True
+
+                batch_size = res.size()[0]
+                index = torch.randperm(batch_size).cuda()
+                mixed_x = lam*res + (1-lam)*res[index, :]
+                y_a, y_b = target, target[index]
+
+                out = self.final_mapping(mixed_x)
+                # out = self.final_mapping(res)
+
+                return out, M_loss, y_a, y_b
+
+            else:
+                out = self.final_mapping(res)
+
+                return out, M_loss
 
     def forward_masks(self, x):
         return self.encoder.forward_masks(x)
@@ -584,9 +602,9 @@ class TabNet(torch.nn.Module):
             mask_type,
         )
 
-    def forward(self, x):
+    def forward(self, x, mixup=False, lam=1, target=1):
         x = self.embedder(x)
-        return self.tabnet(x)
+        return self.tabnet(x, mixup, lam, target)
 
     def forward_masks(self, x):
         x = self.embedder(x)
